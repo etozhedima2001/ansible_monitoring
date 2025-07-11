@@ -1,0 +1,52 @@
+-
+  name: 'install node exporter'
+  hosts: all
+  vars_files:  
+    - ../secret.yml
+  become: yes
+  tasks:
+    -
+      name: 'download package'
+      get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+        dest: /tmp
+    -
+      name: 'unzip tar'
+      unarchive:
+        src: /tmp/node_exporter-1.6.1.linux-amd64.tar.gz
+        dest: /tmp
+        remote_src: yes
+    # -
+    #   name: 'start node exporter'
+    #   command: /tmp/node_exporter-1.6.1.linux-amd64/node_exporter
+    #   async: 60
+    #   poll: 0
+    -
+      name: 'create systemd service'
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          User=root
+          ExecStart=/tmp/node_exporter-1.6.1.linux-amd64/node_exporter
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+    -
+      name: 'reload systemd and start service'
+      ansible.builtin.systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+        daemon_reload: yes
+    -
+      name: 'delete tar'
+      ansible.builtin.file:
+        path: /tmp/node_exporter-1.6.1.linux-amd64.tar.gz
+        state: absent

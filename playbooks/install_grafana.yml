@@ -1,0 +1,23 @@
+-
+  name: 'install grafana'
+  hosts: home2
+  vars_files:  
+    - ../secret.yml
+  become: yes
+  tasks:
+    -
+      name: 'copy grafana deb package'
+      ansible.builtin.copy:
+        src: "/tmp/grafana-enterprise_12.0.2_amd64.deb"
+        dest: "/tmp/grafana-enterprise_12.0.2_amd64.deb"
+        mode: '0644'
+    -
+      name: 'install grafana'
+      ansible.builtin.apt:
+        deb: "/tmp/grafana-enterprise_12.0.2_amd64.deb"
+    - 
+      name: Enable and start Grafana service
+      ansible.builtin.systemd:
+        name: grafana-server
+        enabled: yes
+        state: started
